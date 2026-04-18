@@ -46,6 +46,9 @@ namespace LabReservation
             reservationController.AutoCleanUp();
 
             // (If you have other code here to load data into your DataGrid, keep it below this)
+            // NEW FEATURE: Lock the calendar to TODAY only!
+            date.MinDate = DateTime.Today;
+            date.MaxDate = DateTime.Today;
         }
 
 
@@ -205,12 +208,59 @@ namespace LabReservation
 
         private void startTime_ValueChanged_1(object sender, EventArgs e)
         {
+            // 1. We detach the event first to prevent an infinite loop of updating
+            startTime.ValueChanged -= startTime_ValueChanged_1;
 
+            DateTime time = startTime.Value;
+            int minute = time.Minute;
+
+            // 2. Check if the minutes are not strictly 00 or 30
+            if (minute != 0 && minute != 30)
+            {
+                // Round to the nearest 30 minutes
+                if (minute < 15) minute = 0;
+                else if (minute < 45) minute = 30;
+                else
+                {
+                    minute = 0;
+                    time = time.AddHours(1); // Roll over to the next hour
+                }
+
+                // Apply the rounded time back to the Start Time box
+                startTime.Value = new DateTime(time.Year, time.Month, time.Day, time.Hour, minute, 0);
+            }
+
+            // 3. MAGIC: Automatically set the End Time to exactly 1 hour later!
+            endTime.Value = startTime.Value.AddHours(1);
+
+            // 4. Re-attach the event so it works the next time they click
+            startTime.ValueChanged += startTime_ValueChanged_1;
         }
 
         private void endTime_ValueChanged(object sender, EventArgs e)
         {
+            // 1. Detach event
+            endTime.ValueChanged -= endTime_ValueChanged;
 
+            DateTime time = endTime.Value;
+            int minute = time.Minute;
+
+            // 2. Force 30-minute increments
+            if (minute != 0 && minute != 30)
+            {
+                if (minute < 15) minute = 0;
+                else if (minute < 45) minute = 30;
+                else
+                {
+                    minute = 0;
+                    time = time.AddHours(1);
+                }
+
+                endTime.Value = new DateTime(time.Year, time.Month, time.Day, time.Hour, minute, 0);
+            }
+
+            // 3. Re-attach event
+            endTime.ValueChanged += endTime_ValueChanged;
         }
 
         private void nameTxtBox_TextChanged_1(object sender, EventArgs e)

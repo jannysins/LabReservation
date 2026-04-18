@@ -20,12 +20,25 @@ namespace LabReservation.controller
                 return false;
             }
 
-            // 2. CHECK THE 3-HOUR LIMIT AND VALID TIME (Your new feature!)
-            // Convert natin yung text mo na "6:21 PM" into actual time objects para ma-compute
+            // CHECK IF THE RESERVATION IS FOR TODAY ONLY
+            if (res.Date.Date != DateTime.Today)
+            {
+                System.Windows.Forms.MessageBox.Show("Reservations are strictly for same-day booking only. You cannot reserve for past or future dates.", "Invalid Date", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Warning);
+                return false;
+            }
+
+            // 2. CHECK THE 3-HOUR LIMIT AND VALID TIME
             DateTime parsedStartTime, parsedEndTime;
 
             if (DateTime.TryParse(res.StartTime, out parsedStartTime) && DateTime.TryParse(res.EndTime, out parsedEndTime))
             {
+                // NEW FEATURE: Prevent booking a time that has already passed today
+                if (parsedStartTime <= DateTime.Now)
+                {
+                    System.Windows.Forms.MessageBox.Show("You cannot reserve a time slot that has already passed today. Please choose a future time.", "Invalid Time", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Warning);
+                    return false;
+                }
+
                 // TimeSpan measures the distance between two times
                 TimeSpan duration = parsedEndTime - parsedStartTime;
 

@@ -52,23 +52,26 @@ namespace LabReservation.repository
             {
                 using (MySqlConnection con = dbConnection.GetConnection())
                 {
-                    // We use COUNT(*) to check if any row matches the same room, date, and start time
+                    // We check for overlapping times using STR_TO_DATE to convert your "hh:mm tt" format.
+                    // An overlap occurs if (NewStart < ExistingEnd) AND (NewEnd > ExistingStart)
                     string query = "SELECT COUNT(*) FROM reservations " +
                                    "WHERE lab_room = @room " +
                                    "AND reservation_date = @date " +
-                                   "AND start_time = @start";
+                                   "AND STR_TO_DATE(@start, '%h:%i %p') < STR_TO_DATE(end_time, '%h:%i %p') " +
+                                   "AND STR_TO_DATE(@end, '%h:%i %p') > STR_TO_DATE(start_time, '%h:%i %p')";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, con))
                     {
                         cmd.Parameters.AddWithValue("@room", res.LabRoom);
                         cmd.Parameters.AddWithValue("@date", res.Date.ToString("yyyy-MM-dd"));
                         cmd.Parameters.AddWithValue("@start", res.StartTime);
+                        cmd.Parameters.AddWithValue("@end", res.EndTime);
 
                         con.Open();
-                        // ExecuteScalar returns the first column of the first row (which is our COUNT)
+                        // ExecuteScalar returns the first column of the first row (the COUNT)
                         int count = Convert.ToInt32(cmd.ExecuteScalar());
 
-                        // If count is greater than 0, it means the slot is taken!
+                        // If count is greater than 0, it means the slot overlaps with an existing one!
                         return count > 0;
                     }
                 }
@@ -76,7 +79,7 @@ namespace LabReservation.repository
             catch (Exception ex)
             {
                 System.Windows.Forms.MessageBox.Show("Database Error: " + ex.Message);
-                return true; // If there's an error, return true (taken) just to be safe and prevent saving
+                return true; // If there's an error, return true (taken) to be safe and prevent bad saves
             }
         }
 
@@ -86,13 +89,10 @@ namespace LabReservation.repository
             {
                 using (MySqlConnection con = dbConnection.GetConnection())
                 {
-                    // The query now checks TWO things:
-                    // 1. Is the date older than today? (Wipe it out immediately)
-                    // 2. Is the date exactly today, BUT the end_time has already passed? (Wipe it out too)
-
+                    // The format is now '%h:%i %p' to perfectly match your new "hh:mm tt" UI!
                     string query = "DELETE FROM reservations " +
                                    "WHERE reservation_date < CURDATE() " +
-                                   "OR (reservation_date = CURDATE() AND STR_TO_DATE(end_time, '%l:%i:%s %p') < CURTIME())";
+                                   "OR (reservation_date = CURDATE() AND STR_TO_DATE(end_time, '%h:%i %p') < CURTIME())";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, con))
                     {

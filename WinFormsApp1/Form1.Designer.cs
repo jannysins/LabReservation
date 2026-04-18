@@ -182,21 +182,26 @@
             // 
             // endTime
             // 
-            endTime.Format = DateTimePickerFormat.Time;
+            endTime.CustomFormat = "hh:mm tt";
+            endTime.Format = DateTimePickerFormat.Custom;
             endTime.Location = new Point(79, 109);
             endTime.Name = "endTime";
+            endTime.ShowUpDown = true;
             endTime.Size = new Size(217, 23);
             endTime.TabIndex = 5;
+            endTime.Value = new DateTime(2026, 4, 18, 12, 0, 0, 0);
             endTime.ValueChanged += endTime_ValueChanged;
             // 
             // startTime
             // 
-            startTime.Format = DateTimePickerFormat.Time;
+            startTime.CustomFormat = "hh:mm tt";
+            startTime.Format = DateTimePickerFormat.Custom;
             startTime.Location = new Point(79, 80);
             startTime.Name = "startTime";
+            startTime.ShowUpDown = true;
             startTime.Size = new Size(217, 23);
             startTime.TabIndex = 4;
-            startTime.Value = new DateTime(2026, 4, 3, 23, 36, 0, 0);
+            startTime.Value = new DateTime(2026, 4, 3, 12, 0, 0, 0);
             startTime.ValueChanged += startTime_ValueChanged_1;
             // 
             // showReservations
