@@ -1,6 +1,6 @@
 ﻿using LabReservation;
 using LabReservation.model;
-using LabReservation.model; // Adjust to your actual namespace
+using LabReservation.model;
 using MySql.Data.MySqlClient;
 using System;
 using System.Data;
@@ -9,7 +9,6 @@ namespace LabReservation.repository
 {
     public class ReservationRepository
     {
-        // Calling the connection class you made earlier
         private ConnectionSql dbConnection = new ConnectionSql();
 
 
@@ -20,22 +19,20 @@ namespace LabReservation.repository
             {
                 using (MySqlConnection con = dbConnection.GetConnection())
                 {
-                    // Make sure the table name and column names match your actual MySQL database!
                     string query = "INSERT INTO reservations (lab_room, reservation_date, start_time, end_time, reserver_name) " +
                                    "VALUES (@room, @date, @start, @end, @name)";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, con))
                     {
-                        // Using parameters prevents SQL Injection!
                         cmd.Parameters.AddWithValue("@room", res.LabRoom);
-                        cmd.Parameters.AddWithValue("@date", res.Date.ToString("yyyy-MM-dd")); // Format for MySQL DATE column
+                        cmd.Parameters.AddWithValue("@date", res.Date.ToString("yyyy-MM-dd"));
                         cmd.Parameters.AddWithValue("@start", res.StartTime);
                         cmd.Parameters.AddWithValue("@end", res.EndTime);
                         cmd.Parameters.AddWithValue("@name", res.Name);
 
                         con.Open();
                         int rowsAffected = cmd.ExecuteNonQuery();
-                        return rowsAffected > 0; // Returns true if saving was successful
+                        return rowsAffected > 0; 
                     }
                 }
             }
@@ -52,8 +49,6 @@ namespace LabReservation.repository
             {
                 using (MySqlConnection con = dbConnection.GetConnection())
                 {
-                    // We check for overlapping times using STR_TO_DATE to convert your "hh:mm tt" format.
-                    // An overlap occurs if (NewStart < ExistingEnd) AND (NewEnd > ExistingStart)
                     string query = "SELECT COUNT(*) FROM reservations " +
                                    "WHERE lab_room = @room " +
                                    "AND reservation_date = @date " +
@@ -68,10 +63,8 @@ namespace LabReservation.repository
                         cmd.Parameters.AddWithValue("@end", res.EndTime);
 
                         con.Open();
-                        // ExecuteScalar returns the first column of the first row (the COUNT)
                         int count = Convert.ToInt32(cmd.ExecuteScalar());
 
-                        // If count is greater than 0, it means the slot overlaps with an existing one!
                         return count > 0;
                     }
                 }
@@ -79,7 +72,7 @@ namespace LabReservation.repository
             catch (Exception ex)
             {
                 System.Windows.Forms.MessageBox.Show("Database Error: " + ex.Message);
-                return true; // If there's an error, return true (taken) to be safe and prevent bad saves
+                return true; 
             }
         }
 
@@ -89,7 +82,6 @@ namespace LabReservation.repository
             {
                 using (MySqlConnection con = dbConnection.GetConnection())
                 {
-                    // The format is now '%h:%i %p' to perfectly match your new "hh:mm tt" UI!
                     string query = "DELETE FROM reservations " +
                                    "WHERE reservation_date < CURDATE() " +
                                    "OR (reservation_date = CURDATE() AND STR_TO_DATE(end_time, '%h:%i %p') < CURTIME())";
@@ -97,7 +89,7 @@ namespace LabReservation.repository
                     using (MySqlCommand cmd = new MySqlCommand(query, con))
                     {
                         con.Open();
-                        cmd.ExecuteNonQuery(); // Executes the deletion quietly
+                        cmd.ExecuteNonQuery(); 
                     }
                 }
             }
@@ -113,7 +105,6 @@ namespace LabReservation.repository
             {
                 using (MySqlConnection con = dbConnection.GetConnection())
                 {
-                    // LOWER() ensures that 'John', 'john', and 'JOHN' are treated as exact matches
                     string query = "SELECT COUNT(*) FROM reservations WHERE LOWER(reserver_name) = LOWER(@name)";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, con))
@@ -123,7 +114,6 @@ namespace LabReservation.repository
                         con.Open();
                         int count = Convert.ToInt32(cmd.ExecuteScalar());
 
-                        // If count is greater than 0, it means this name is already in the database!
                         return count > 0;
                     }
                 }
@@ -131,10 +121,9 @@ namespace LabReservation.repository
             catch (Exception ex)
             {
                 System.Windows.Forms.MessageBox.Show("Database Error: " + ex.Message);
-                return true; // Return true to block the saving just in case of an error
+                return true;
             }
         }
-        // 1. Fetches the existing reservation based on the name
         public Reservation GetReservationByName(string name)
         {
             using (MySqlConnection con = dbConnection.GetConnection())
@@ -146,7 +135,7 @@ namespace LabReservation.repository
                     con.Open();
                     using (MySqlDataReader reader = cmd.ExecuteReader())
                     {
-                        if (reader.Read()) // If a record is found
+                        if (reader.Read()) 
                         {
                             return new Reservation
                             {
@@ -160,10 +149,10 @@ namespace LabReservation.repository
                     }
                 }
             }
-            return null; // Return null if the name doesn't exist
+            return null;
         }
 
-        // 2. Updates the existing reservation
+        // Updates the existing reservation
         public bool UpdateReservation(string originalName, Reservation updatedRes)
         {
             try
@@ -181,7 +170,7 @@ namespace LabReservation.repository
                         cmd.Parameters.AddWithValue("@start", updatedRes.StartTime);
                         cmd.Parameters.AddWithValue("@end", updatedRes.EndTime);
                         cmd.Parameters.AddWithValue("@newName", updatedRes.Name);
-                        cmd.Parameters.AddWithValue("@origName", originalName); // To find the right row!
+                        cmd.Parameters.AddWithValue("@origName", originalName);
 
                         con.Open();
                         int rows = cmd.ExecuteNonQuery();
@@ -202,7 +191,6 @@ namespace LabReservation.repository
             {
                 using (MySqlConnection con = dbConnection.GetConnection())
                 {
-                    // LOWER() ensures it deletes correctly whether they type "John" or "JOHN"
                     string query = "DELETE FROM reservations WHERE LOWER(reserver_name) = LOWER(@name)";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, con))
@@ -212,7 +200,6 @@ namespace LabReservation.repository
                         con.Open();
                         int rows = cmd.ExecuteNonQuery();
 
-                        // Returns true if at least 1 row was successfully deleted
                         return rows > 0;
                     }
                 }
@@ -231,14 +218,12 @@ namespace LabReservation.repository
             {
                 using (MySqlConnection con = dbConnection.GetConnection())
                 {
-                    // Simple query to get everything
                     string query = "SELECT * FROM reservations";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, con))
                     {
                         con.Open();
 
-                        // A DataAdapter automatically reads the data and fills a DataTable
                         using (MySqlDataAdapter adapter = new MySqlDataAdapter(cmd))
                         {
                             adapter.Fill(dt);
