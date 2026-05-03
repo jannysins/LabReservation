@@ -42,7 +42,7 @@ namespace LabReservation
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            reservationController.AutoCleanUp();
+            //reservationController.AutoCleanUp();
 
             date.MinDate = DateTime.Today;
             date.MaxDate = DateTime.Today;

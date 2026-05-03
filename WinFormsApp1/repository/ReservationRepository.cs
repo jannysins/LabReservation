@@ -218,12 +218,17 @@ namespace LabReservation.repository
             {
                 using (MySqlConnection con = dbConnection.GetConnection())
                 {
-                    string query = "SELECT * FROM reservations";
+                    // NEW QUERY: Only select reservations that haven't ended yet!
+                    // It checks if the date is in the future, OR if it's today and the end time is >= the current time.
+                    string query = "SELECT * FROM reservations " +
+                                   "WHERE reservation_date > CURDATE() " +
+                                   "OR (reservation_date = CURDATE() AND STR_TO_DATE(end_time, '%h:%i %p') >= CURTIME())";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, con))
                     {
                         con.Open();
 
+                        // A DataAdapter automatically reads the data and fills a DataTable
                         using (MySqlDataAdapter adapter = new MySqlDataAdapter(cmd))
                         {
                             adapter.Fill(dt);
